@@ -70,7 +70,7 @@ const baseReplies = [
     "Aap mere favorite person ho, pata hai na? 🙈💖",
     "Aap se baat karke aisa lagta hai jaise waqt tham gaya ho ⏳🌸",
     "Aap ki cute baatein sun kar dil khush ho gaya 🥺✨",
-    "Suno, thoda sa smile kar do na abhi 😊❤️️",
+    "Suno, thoda sa smile kar do na abhi 😊❤",
     "Aapki respect hamesha mere dil mein rahegi 🤝🌟",
     "Aap se zyada pyaara koi aur ho hi nahi sakta 🌸😍",
     "Aap ki har khwaish poori ho, Ameen 🤲💖",
@@ -114,7 +114,7 @@ const baseReplies = [
     "Aapka dimaag 404 Not Found dikha raha hai 💻🚫",
     "Bhai tu hero nahi, zero ka chota bhai lag raha hai 0️⃣🤭",
     "Itne pyare mat bano, nazar lag jayegi 🐴🧿",
-    "Suno, bina dimag ke jeena kaisa lagta hai? Mujhe bhi batao 🧠🤷‍♂️",
+    "Suno, bina dimag ke jeena kaisa lagta hai? Mujhe bhi batao 🧠🤷‍♂️️",
     "Chup chap so jao, raat ko bhoot pakad lenge 👻🌙",
     "𝗢𝗶𝗶-Mama mat bula please, 32 tareekh ko meri shadi hai! 🫣💃🏻",
     "Kitne din ho gaye bistar pe nahi moota, miss karta hu bachpan ke din 🥺🥀",
@@ -132,11 +132,11 @@ module.exports = {
   config: {
     name: "bot",
     aliases: ["basereplies"],
-    version: "1.0.0",
+    version: "1.0.3",
     author: "TAHA KHAN",
     countDown: 2,
     role: 0,
-    description: "Replies only when strictly 'bot' is sent",
+    description: "Replies only when strictly 'bot' is sent as a standalone word",
     category: "fun",
     guide: "{pn}"
   },
@@ -150,16 +150,9 @@ module.exports = {
     return baseReplies[Math.floor(Math.random() * baseReplies.length)];
   },
 
-  async onStart({ api, event, usersData }) {
-    const uid = event.senderID;
-    const senderName = (await usersData?.getName(uid)) || "User";
-    const randomReply = this.getRandomReply();
-    const mentionObj = this.realMention(senderName, uid, randomReply);
-    
-    if (api.setMessageReaction) {
-      api.setMessageReaction("😘", event.messageID, () => {}, true);
-    }
-    return api.sendMessage(mentionObj, event.threadID, event.messageID);
+  // Duplicate response rokne ke liye onStart ko empty rakha gaya hai
+  async onStart() {
+    return;
   },
 
   async onChat({ api, event, usersData }) {
@@ -172,10 +165,11 @@ module.exports = {
     const prefix = global.GoatBot?.config?.prefix || ".";
     if (body.startsWith(prefix)) return;
 
-    // Check kar raha hai ke poora message sirf "bot" hi hai (symbols aur spaces ko hata kar)
-    const cleanedText = body.replace(/[^a-zA-Z]/g, "");
+    // Direct check: SIRF "bot" par hi run hoga (sath emojis ya punctuation allow hain)
+    // "bot kasa ho", "bot hi" par execute nahi hoga
+    const isOnlyBot = /^bot[\s!?.❤️]*$/i.test(body);
 
-    if (cleanedText === "bot") {
+    if (isOnlyBot) {
       const uid = event.senderID;
       const senderName = (await usersData?.getName(uid)) || "User";
       const randomReply = this.getRandomReply();
